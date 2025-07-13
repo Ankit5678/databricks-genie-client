@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "databricks-genie-client"
+version = "0.1.0"
+description = "Enterprise-grade client for Databricks Genie API"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.28.1",
+    "pydantic>=1.10.2"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "responses"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["genie_client*"]
