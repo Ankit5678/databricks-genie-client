@@ -3,7 +3,7 @@ from genie_client.core.client import GenieClient
 
 
 config = PATGenieClientConfig(
-    personal_access_token="dapi95b45f3423291c0521c80e599e8331f0",
+    personal_access_token="<PAT>",
     databricks_url="https://dbc-c6d167b8-12f9.cloud.databricks.com",
     workspace_id="12cd53492d274d98"
 )
