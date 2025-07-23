@@ -15,6 +15,9 @@ An enterprise-grade Python client for seamless interaction with Databricks Genie
 - **Result Processing**: Automatic handling of chunked query results and attachments
 - **Enterprise Ready**: Production-grade logging, metrics, and validation
 - **Type Safety**: Full Pydantic model validation for all configurations and responses
+- **Natural Language Generation**: Generate natural language answers from query results using Databricks model serving endpoints
+  **Note**: When enabling natural language generation, the `user_prompt_template` must include the placeholders `{formatted_query_results}` and `{question}`.
+- **Environment Variable Support**: Load configuration from environment variables using dotenv
 
 ## Installation
 
@@ -31,6 +34,15 @@ pip install -e .
 ```
 
 ## Quick Start
+
+### Databricks Genie Client Environment Variables
+DATABRICKS_URL=https://your-workspace.cloud.databricks.com
+WORKSPACE_ID=1234567890
+DEFAULT_SPACE_ID=your-genie-space-id
+ENABLE_NATURAL_LANGUAGE=True
+MODEL_ENDPOINT_NAME=your-model-endpoint-name
+DATABRICKS_PAT=dapi1234567890abcdef1234567890abcdef
+
 
 ### Azure AD Authentication
 

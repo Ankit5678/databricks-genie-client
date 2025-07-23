@@ -5,6 +5,9 @@ class GenieEndpoints:
     GET_MESSAGE = "/api/2.0/genie/spaces/{space_id}/conversations/{conversation_id}/messages/{message_id}"
     GET_QUERY_RESULT = "/api/2.0/genie/spaces/{space_id}/conversations/{conversation_id}/messages/{message_id}/query-result/{attachment_id}"
 
+class ModelServingEndpoints:
+    MODEL_ENDPOINT_BASE = "/serving-endpoints/{endpoint_name}/invocations"
+
 class Status:
     """Status constants for Genie operations"""
     INITIATED = "INITIATED"

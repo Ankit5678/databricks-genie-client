@@ -16,6 +16,7 @@ class GenieResponse(BaseModel):
     status: str  # IN_PROGRESS, EXECUTING_QUERY, COMPLETED, FAILED, CANCELLED
     attachments: List[Attachment] = []
     results: Optional[Dict[str, Any]] = None
+    natural_language_answer: Optional[str] = None
     start_time: datetime
     end_time: Optional[datetime] = None
     duration_ms: Optional[float] = None

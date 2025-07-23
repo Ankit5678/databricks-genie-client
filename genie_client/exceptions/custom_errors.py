@@ -39,3 +39,6 @@ class ResultRetrievalError(APIRequestError):
 
 class OperationAbortedError(GenieBaseError):
     """Operation aborted by client or server"""
+
+class NLGenerationError(GenieBaseError):
+    """Natural language generation failed"""

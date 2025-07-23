@@ -8,6 +8,8 @@ from ..utils.validation import validate_input
 from .api_client import GenieAPIClient
 from .auth import TokenManager
 from ..utils.constants import Status, TERMINAL_STATUSES, POLLABLE_STATUSES, POLL_TIMEOUT
+from ..utils.formatting import format_results_to_markdown
+from ..utils.prompts import DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT
 from ..utils.logging import logger
 
 class GenieClient:
@@ -77,7 +79,7 @@ class GenieClient:
             
             # Process results if completed
             if response.status == Status.COMPLETED:
-                response = self._process_attachments(space_id, response)
+                response = self._process_attachments(space_id, question, response)
             
             response.success = True
             logger.info("Operation completed successfully")
@@ -189,35 +191,8 @@ class GenieClient:
         elif "error" in attachment:
             return "error"
         return "unknown"
-    
-    # def _process_attachments(self, space_id: str, response: GenieResponse) -> GenieResponse:
-    #     """Processes attachments and fetches query results"""
-    #     for attachment in response.attachments:
-    #         if attachment.type == "query" and attachment.attachment_id:
-    #             try:
-    #                 result = self.api_client.get_query_result(
-    #                     space_id,
-    #                     response.conversation_id,
-    #                     response.message_id,
-    #                     attachment.attachment_id
-    #                 )
-    #                 print(result)
-    #                 # Store results in response
-    #                 if "result" in result:
-    #                     response.results = {
-    #                         "data": result["result"].get("data_array"),
-    #                         "columns": result["result"].get("metadata", {}).get("column_names"),
-    #                         "row_count": result["result"].get("metadata", {}).get("row_count")
-    #                     }
-    #                     # Add metrics
-    #                     response.metrics["result_row_count"] = result["result"].get("metadata", {}).get("row_count", 0)
-    #             except APIRequestError as e:
-    #                 logger.error(f"Failed to fetch results: {str(e)}")
-    #                 response.error_message = f"Result fetch failed: {str(e)}"
-    #                 response.error_type = "RESULT_RETRIEVAL_ERROR"
-    #     return response
 
-    def _process_attachments(self, space_id: str, response: GenieResponse) -> GenieResponse:
+    def _process_attachments(self, space_id: str, question: str, response: GenieResponse) -> GenieResponse:
         """Processes attachments and fetches query results with chunk handling"""
         for attachment in response.attachments:
             if attachment.type == "query" and attachment.attachment_id:
@@ -287,12 +262,57 @@ class GenieClient:
                     # Add metrics
                     response.metrics["result_row_count"] = total_rows
                     response.metrics["result_chunk_count"] = total_chunks
+
+                    # Generating Natural language answer if enabled
+                    if self.config.enable_natural_language and response.results:
+                        response.natural_language_answer = self._generate_natural_language_answer(
+                            question, 
+                            response.results
+                        )
+                        # Add metric
+                        response.metrics["nl_generated"] = bool(response.natural_language_answer)
                     
                 except APIRequestError as e:
                     logger.error(f"Failed to fetch results: {str(e)}")
                     response.error_message = f"Result fetch failed: {str(e)}"
                     response.error_type = "RESULT_RETRIEVAL_ERROR"
         return response
+    
+    def _generate_natural_language_answer(self, question: str, results: dict) -> str:
+        """Generates natural language answer from query results"""
+        # Format results as markdown
+        formatted_table = format_results_to_markdown(
+            columns=results.get("columns", []),
+            data=results.get("data", [])
+        )
+        
+        # Get prompt templates from config or defaults
+        system_prompt = self.config.system_prompt_template or DEFAULT_SYSTEM_PROMPT
+        user_prompt_template = self.config.user_prompt_template or DEFAULT_USER_PROMPT
+        user_prompt = user_prompt_template.format(
+            question=question,
+            formatted_query_results=formatted_table
+        )
+        
+        # Prepare payload for model endpoint
+        payload = {
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            "max_tokens": 2048,
+            "temperature": 0.0
+        }
+        
+        try:
+            # Generate natural language response
+            return self.api_client.generate_natural_language(
+                self.config.model_endpoint_name,
+                payload
+            )
+        except Exception as e:
+            logger.error(f"NL generation failed: {str(e)}")
+            return None
     
     def _log_metrics(self, response: GenieResponse):
         """Logs operation metrics"""

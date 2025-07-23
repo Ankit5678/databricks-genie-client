@@ -35,6 +35,10 @@ class StructuredFormatter(logging.Formatter):
         # Add custom context if available
         if hasattr(record, "context"):
             log_data.update(record.context)
+        
+        # Add NL generation metrics
+        if hasattr(record, 'nl_generated'):
+            log_data["nl_generated"] = record.nl_generated
             
         return json.dumps(log_data)
 
