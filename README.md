@@ -19,6 +19,11 @@ An enterprise-grade Python client for seamless interaction with Databricks Genie
   **Note**: When enabling natural language generation, the `user_prompt_template` must include the placeholders `{formatted_query_results}` and `{question}`.
 - **Environment Variable Support**: Load configuration from environment variables using dotenv
 
+## Natural Language Generation
+To enable, set `ENABLE_NATURAL_LANGUAGE=True` and provide `MODEL_ENDPOINT_NAME` in your environment variables.
+You may customize system/user prompt templates to guide answer style.
+The client will format tabular results as markdown and send them to your configured model endpoint (LLM) for interpretation.
+
 ## Installation
 
 ```bash
@@ -36,28 +41,33 @@ pip install -e .
 ## Quick Start
 
 ### Databricks Genie Client Environment Variables
+Set these in your .env file or environment:
+```env
 DATABRICKS_URL=https://your-workspace.cloud.databricks.com
 WORKSPACE_ID=1234567890
 DEFAULT_SPACE_ID=your-genie-space-id
 ENABLE_NATURAL_LANGUAGE=True
 MODEL_ENDPOINT_NAME=your-model-endpoint-name
 DATABRICKS_PAT=dapi1234567890abcdef1234567890abcdef
+```
 
 
 ### Azure AD Authentication
 
 ```python
-from genie_client import GenieClient
 from genie_client.config import AzureADGenieClientConfig
+from genie_client.core.client import GenieClient
+from genie_client.utils.env import get_config_from_env
 
-# Configure client with Azure AD
+config_dict = get_config_from_env()
 config = AzureADGenieClientConfig(
-    client_id="your-client-id",
-    client_secret="your-client-secret", 
-    tenant_id="your-tenant-id",
-    databricks_url="https://your-workspace.cloud.databricks.com",
-    workspace_id="1234567890",
-    default_space_id="your-genie-space-id"
+    client_id=config_dict["client_id"],
+    client_secret=config_dict["client_secret"],
+    tenant_id=config_dict["tenant_id"],
+    databricks_url=config_dict["databricks_url"],
+    workspace_id=config_dict["workspace_id"],
+    enable_natural_language=True,
+    model_endpoint_name=config_dict["model_endpoint_name"],
 )
 
 client = GenieClient(config)
@@ -77,14 +87,20 @@ if response.success:
 
 ```python
 from genie_client.config import PATGenieClientConfig
+from genie_client.core.client import GenieClient
+from genie_client.utils.env import get_config_from_env
 
+config_dict = get_config_from_env()
 config = PATGenieClientConfig(
-    personal_access_token="dapi1234567890abcdef1234567890abcdef",
-    databricks_url="https://your-workspace.cloud.databricks.com",
-    workspace_id="1234567890"
+    personal_access_token=config_dict["personal_access_token"],
+    databricks_url=config_dict["databricks_url"],
+    workspace_id=config_dict["workspace_id"],
+    enable_natural_language=True,
+    model_endpoint_name=config_dict["model_endpoint_name"],
 )
-
 client = GenieClient(config)
+
+# Ask a question
 response = client.ask_genie("What are our monthly sales trends?")
 ```
 
